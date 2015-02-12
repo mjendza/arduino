@@ -1,5 +1,4 @@
 #include <DHT.h>
-
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <EtherCard.h>
@@ -8,7 +7,7 @@
 #define ONE_WIRE_BUS 7
 // ethernet interface mac address, must be unique on the LAN
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
-static byte myip[] = { 192,168,1,203 };
+static byte myip[] = { 192,168,1,149 };
 
 byte Ethernet::buffer[500];
 BufferFiller bfill;
@@ -21,35 +20,36 @@ DallasTemperature sensors(&oneWire);
 
 float h =0.0;
 float f = 0.0; 
+double t_dt20b18=20.0;
+
 #define DHTTYPE DHT11 
 #define DHTPIN 2 
 DHT dht(DHTPIN, DHTTYPE);
+
+
 void setup(void)
 {
-   //Serial.println("temp"); 
-Serial.begin(9600);
-//sensors.begin();
-
-dht.begin();
-//if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
-//    Serial.println( "Failed to access Ethernet controller");
-//  ether.staticSetup(myip);
+  //DT20B18
+  Serial.begin(9600);
+  sensors.begin();
+  //DTH
+  //dht.begin();
   
-  
-  delay(10000);
+  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
+      Serial.println( "Failed to access Ethernet controller");
+  ether.staticSetup(myip);  
 }
+
+
 void loop(void)
 {
-  readDht();
- // setHomePage();
+  //readDht();
+  readTemp();
+  setHomePage();
 //temp++;
 //if(temp>8000){
-  //temp=0;
+  //temp=0;   
   
-  
-  delay(1000);
-//}
-
 }
 void setHomePage()
 {
@@ -75,10 +75,9 @@ void readDht(){
 void readTemp()
 {
  sensors.requestTemperatures();
-Serial.println("");
 delay(500);
-Serial.print("Sensor 1: ");
-Serial.println(sensors.getTempCByIndex(0)); // first founded sensor have Index 0 
+t_dt20b18 = sensors.getTempCByIndex(0); // first founded sensor have Index 0 
+Serial.println(t_dt20b18); 
 }
 
 
@@ -88,6 +87,7 @@ static word homePage() {
   byte m = (t / 60) % 60;
   byte s = t % 60;
   bfill = ether.tcpOffset();
+  char buffera[10];
   bfill.emit_p(PSTR(
     "HTTP/1.0 200 OK\r\n"
     "Content-Type: text/html\r\n"
@@ -96,8 +96,9 @@ static word homePage() {
     "<meta http-equiv='refresh' content='1'/>"
     "<title>Arduino server</title>"
     "<h1>$D$D:$D$D:$D$D</h1>"
-    "<h1>temp $D</h1>"
-    "<h1>hyd $3.5F</h1>"),
-      h/10, h%10, m/10, m%10, s/10, s%10, f, h);
+    "<h1>temp $S</h1>"
+    ),
+      h/10, h%10, m/10, m%10, s/10, s%10, dtostrf(t_dt20b18, 2, 2, buffera) );//dtostrf(t_dt20b18, 2, 2, buffera)
   return bfill.position();
 }
+
