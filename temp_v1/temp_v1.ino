@@ -1,46 +1,30 @@
-#include <IRremote.h>
 #include <SoftwareSerial.h>
-//http://www.arduino.cc/en/Reference/SoftwareSerial
-int RECV_PIN = 5;
-IRrecv irrecv(RECV_PIN);
-decode_results results;
+char receivedChar;
+int  LED = 5; // LED on pin 13
+SoftwareSerial mySerial(11, 12); // RX, TX
 
-SoftwareSerial mySerial(10, 11); // RX, TX
-
+//RX on Bluetooth to TCX on Arduino through a voltage divider 50ohm from arduino and 100ohm to ground. This is so we can drop the the voltage down to 3.3v (roughly)
+// Use blueterm on android to get messages
+int sensorPin = A0;
 void setup()
 {
-  Serial.begin(9600);
+  // Open serial communications and wait for port to open:
+  pinMode(LED, OUTPUT);
+  mySerial.begin(9600);  
+}
+
+void loop() // run over and over
+{
+
+  while (!mySerial.available());   // stay here so long as COM port is empty
  
-  irrecv.enableIRIn(); // Start the receiver
-  digitalWrite(6, HIGH);
-  //digitalWrite(12, HIGH);  
-  pinMode(6, OUTPUT);     
-  //pinMode(12, OUTPUT);
-  
-    // set the data rate for the SoftwareSerial port
-  mySerial.begin(4800);
-  mySerial.println("Hello, world?");
+  receivedChar = mySerial.read();
+  if (receivedChar == '1') {
+    digitalWrite(LED, HIGH);
+  }// if it's a 1 turn LED on
+  if (receivedChar == '2') {
+    digitalWrite(LED, LOW);
+  } // if it's a 2 turn LED off
   
 }
-
-void loop() {
-  if (irrecv.decode(&results)) {
-    Serial.println(results.value, HEX);
-    //FF6897 button "1"
-
-    irrecv.resume(); // Receive the next value
-  }
-  delay(4000);
-  digitalWrite(6, HIGH); // dioda na Arduino
-  //digitalWrite(12, HIGH); // przekaźnik
-  delay(4000);
-  digitalWrite(6, LOW);
-  //digitalWrite(12, LOW);
-  
-//   if (mySerial.available())
-//    Serial.write(mySerial.read());
-//  if (Serial.available())
-//    mySerial.write(Serial.read());
-}
-
 
